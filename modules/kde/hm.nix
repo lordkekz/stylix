@@ -272,13 +272,15 @@ let
       fi
 
       if wallpaper_image="$(global_path plasma-apply-wallpaperimage)"; then
-        "$xvfb_prefix" "$wallpaper_image" "${themePackage}/share/wallpapers/stylix"
+        "$xvfb_prefix" "$wallpaper_image" "${themePackage}/share/wallpapers/stylix" || \
+          echo "Failed plasma-apply-wallpaperimage, ignoring error."
       else
         echo "Skipping plasma-apply-wallpaperimage: command not found"
       fi
 
       if look_and_feel="$(global_path plasma-apply-lookandfeel)"; then
-        "$xvfb_prefix" "$look_and_feel" --apply stylix
+        "$xvfb_prefix" "$look_and_feel" --apply stylix || \
+          echo "Failed plasma-apply-lookandfeel, ignoring error."
       else
         echo "Skipping plasma-apply-lookandfeel: command not found"
       fi

@@ -251,31 +251,39 @@ let
   # might be installed, and look there. The ideal solution would require
   # changes to KDE to make it possible to update the wallpaper through
   # config files alone.
-  activator = pkgs.writeShellScriptBin "stylix-set-kde-wallpaper" ''
-    set -eu
-    global_path() {
-      for directory in /run/current-system/sw/bin /usr/bin /bin; do
-        if [[ -f "$directory/$1" ]]; then
-          printf '%s\n' "$directory/$1"
-          return 0
-        fi
-      done
+  activator = pkgs.writeShellApplication {
+    name = "stylix-set-kde-wallpaper";
+    text = ''
+      global_path() {
+        for directory in /run/current-system/sw/bin /usr/bin /bin; do
+          if [[ -f "$directory/$1" ]]; then
+            printf '%s\n' "$directory/$1"
+            return 0
+          fi
+        done
 
-      return 1
-    }
+        return 1
+      }
 
-    if wallpaper_image="$(global_path plasma-apply-wallpaperimage)"; then
-      "$wallpaper_image" "${themePackage}/share/wallpapers/stylix"
-    else
-      echo "Skipping plasma-apply-wallpaperimage: command not found"
-    fi
+      xvfb_prefix=
+      if [ -z "''${DISPLAY:-}" ]; then
+        echo "stylix kde activator: DISPLAY unset, using xvfb-run for virtual X11 session."
+        xvfb_prefix=${lib.getExe pkgs.xvfb-run}
+      fi
 
-    if look_and_feel="$(global_path plasma-apply-lookandfeel)"; then
-      "$look_and_feel" --apply stylix
-    else
-      echo "Skipping plasma-apply-lookandfeel: command not found"
-    fi
-  '';
+      if wallpaper_image="$(global_path plasma-apply-wallpaperimage)"; then
+        "$xvfb_prefix" "$wallpaper_image" "${themePackage}/share/wallpapers/stylix"
+      else
+        echo "Skipping plasma-apply-wallpaperimage: command not found"
+      fi
+
+      if look_and_feel="$(global_path plasma-apply-lookandfeel)"; then
+        "$xvfb_prefix" "$look_and_feel" --apply stylix
+      else
+        echo "Skipping plasma-apply-lookandfeel: command not found"
+      fi
+    '';
+  };
 
   activateDocs = "https://stylix.danth.me/options/hm.html#stylixtargetskdeservice";
 in
@@ -290,10 +298,9 @@ in
           packages = [ themePackage ];
 
           # This activation entry will run the theme activator when the homeConfiguration is activated
-          # Note: This only works in an already running Plasma session.
           activation.stylixLookAndFeel = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
             ${lib.getExe activator} || verboseEcho \
-              "KDE theme setting failed. See `${activateDocs}`"
+              "KDE theme setting failed. See ${activateDocs}"
           '';
         };
 

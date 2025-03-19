@@ -268,16 +268,19 @@ let
           }
 
           if look_and_feel="$(get_exe plasma-apply-lookandfeel)"; then
-            QT_QPA_PLATFORM=minimal "$look_and_feel" --apply "stylix" ||
+            "$look_and_feel" --apply "stylix" ||
               echo "Failed plasma-apply-lookandfeel, ignoring error."
           fi
         ''
         ''
           if wallpaper_image="$(get_exe plasma-apply-wallpaperimage)"; then
-            QT_QPA_PLATFORM=minimal "$wallpaper_image" "${themePackage}/share/wallpapers/stylix" ||
+            "$wallpaper_image" "${themePackage}/share/wallpapers/stylix" ||
               echo "Failed plasma-apply-wallpaperimage, ignoring error."
           fi
         '';
+    runtimeEnv = {
+      "QT_QPA_PLATFORM" = "minimal";
+    };
   };
   activator = lib.getExe activatorPackage;
   activateDocs = "https://stylix.danth.me/options/hm.html#stylixtargetskdeservice";
